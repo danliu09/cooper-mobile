@@ -13,7 +13,6 @@ export default function DomainsScreen() {
   const [statuses, setStatuses] = useState<DomainStatus>({});
 
   useEffect(() => {
-    // Check health of all domains on mount
     DOMAINS.forEach(async (domain) => {
       try {
         await checkHealth(domain.name);
@@ -26,7 +25,9 @@ export default function DomainsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.subtitle}>Select a domain to start asking questions</Text>
+      <Text style={styles.subtitle}>
+        Select a domain to ask domain-specific questions
+      </Text>
       <View style={styles.grid}>
         {DOMAINS.map((domain) => (
           <DomainCard

@@ -1,14 +1,21 @@
 /**
  * SMECO COOPER Mobile App Configuration
  *
- * API_BASE_URL: Points to the REST API gateway on analyticsdev2.
- * Each domain runs on its own port (4001-4010).
- * Update this if connecting via VPN or reverse proxy.
+ * Two modes:
+ *   PROXY mode (default): All traffic goes through analytics.smeco.com/ai/api/
+ *     Nginx proxies to analyticsdev2 ports. Works over VPN.
+ *   DIRECT mode: Talk to analyticsdev2 ports directly (corp network only).
+ *
+ * Set USE_PROXY = false for direct mode (testing on corp network).
  */
 
-// Default: direct connection to analyticsdev2
-// Change this to your server's IP/hostname accessible from your phone
-export const API_HOST = "http://analyticsdev2.smeco.com";
+export const USE_PROXY = true;
+
+// Proxy mode: Nginx on analytics.smeco.com forwards /ai/api/{domain}/ to analyticsdev2
+export const PROXY_BASE_URL = "https://analytics.smeco.com/ai/api";
+
+// Direct mode: talk to analyticsdev2 ports directly
+export const DIRECT_HOST = "http://analyticsdev2.smeco.com";
 
 export const DOMAINS = [
   { name: "reliability", port: 4001, label: "Reliability", icon: "flash" as const, color: "#e74c3c" },
@@ -32,5 +39,34 @@ export function getDomainConfig(name: string) {
 export function getApiUrl(domain: string) {
   const config = getDomainConfig(domain);
   if (!config) throw new Error(`Unknown domain: ${domain}`);
-  return `${API_HOST}:${config.port}`;
+
+  if (USE_PROXY) {
+    // Proxy mode: https://analytics.smeco.com/ai/api/hr
+    // Map domain name to short name used in Nginx
+    const shortName = DOMAIN_SHORT_NAMES[config.name] || config.name;
+    return `${PROXY_BASE_URL}/${shortName}`;
+  }
+
+  // Direct mode: http://analyticsdev2.smeco.com:4002
+  return `${DIRECT_HOST}:${config.port}`;
+}
+
+// Short names for Nginx proxy paths (domain name → URL segment)
+const DOMAIN_SHORT_NAMES: Record<string, string> = {
+  human_resource: "hr",
+  // All others use their domain name as-is
+};
+
+// Router gateway URL (auto-classification endpoint)
+export function getRouterUrl() {
+  if (USE_PROXY) {
+    return `${PROXY_BASE_URL}/router`;
+  }
+  return `${DIRECT_HOST}:4000`;
+}
+
+// Domain label lookup
+export function getDomainLabel(name: string): string {
+  const config = getDomainConfig(name);
+  return config?.label || name;
 }

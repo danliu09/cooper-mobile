@@ -9,16 +9,27 @@ export default function RootLayout() {
       screenOptions={{
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textSecondary,
-        headerStyle: { backgroundColor: Colors.primary },
-        headerTintColor: "#ffffff",
+        tabBarStyle: { backgroundColor: Colors.surface, borderTopColor: Colors.border },
+        headerStyle: { backgroundColor: Colors.background },
+        headerTintColor: Colors.text,
         headerTitleStyle: { fontWeight: "600" },
       }}
     >
       <Tabs.Screen
+        name="chat"
+        options={{
+          title: "Chat",
+          headerTitle: "SMECO COOPER",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbubbles" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="index"
         options={{
           title: "Domains",
-          headerTitle: "SMECO COOPER",
+          headerTitle: "Domains",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="grid" size={size} color={color} />
           ),
@@ -47,7 +58,7 @@ export default function RootLayout() {
       <Tabs.Screen
         name="domain/[name]"
         options={{
-          href: null, // Hide from tab bar — navigated to from domain picker
+          href: null,
         }}
       />
     </Tabs>

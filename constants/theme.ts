@@ -1,16 +1,18 @@
 /**
- * SMECO COOPER theme colors
+ * SMECO COOPER theme — LibreChat-inspired dark theme
  */
 export const Colors = {
-  primary: "#1a5276",
-  primaryLight: "#2980b9",
-  background: "#f5f6fa",
-  surface: "#ffffff",
-  text: "#2c3e50",
-  textSecondary: "#7f8c8d",
-  border: "#dcdde1",
-  error: "#e74c3c",
-  success: "#27ae60",
+  primary: "#10a37f",
+  primaryLight: "#19c37d",
+  background: "#343541",
+  surface: "#444654",
+  surfaceUser: "#343541",
+  text: "#ececf1",
+  textSecondary: "#8e8ea0",
+  border: "#4e4f60",
+  error: "#ef4146",
+  success: "#10a37f",
   warning: "#f39c12",
-  chartBackground: "#ffffff",
+  chartBackground: "#2d2d3a",
+  inputBg: "#40414f",
 };

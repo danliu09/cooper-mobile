@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   },
   sqlContainer: {
     marginTop: 8,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: Colors.inputBg,
     borderRadius: 6,
     padding: 8,
   },

@@ -29,6 +29,9 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
+    "experiments": {
+      "baseUrl": "/ai"
+    },
     "plugins": [
       "expo-router"
     ]
