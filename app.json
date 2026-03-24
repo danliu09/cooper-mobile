@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Chatgpt",
-    "slug": "chatgpt",
+    "name": "SMECO COOPER",
+    "slug": "smeco-cooper",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "chatgpt",
+    "scheme": "smeco-cooper",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -15,14 +15,14 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.supersimon.chatgpt"
+      "bundleIdentifier": "com.smeco.cooper"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.supersimon.chatgpt"
+      "package": "com.smeco.cooper"
     },
     "web": {
       "bundler": "metro",

@@ -1,76 +1,37 @@
 import Colors from '@/constants/Colors';
 import { defaultStyles } from '@/constants/Styles';
-import { keyStorage } from '@/utils/Storage';
+import { DOMAINS, PROXY_BASE_URL, USE_PROXY, DIRECT_HOST } from '@/constants/config';
 import { useAuth } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Button } from 'react-native';
-import { useMMKVString } from 'react-native-mmkv';
+import { View, Text, StyleSheet, Button, ScrollView } from 'react-native';
+
 const Page = () => {
-  const [key, setKey] = useMMKVString('apikey', keyStorage);
-  const [organization, setOrganization] = useMMKVString('org', keyStorage);
-
-  const [apiKey, setApiKey] = useState('');
-  const [org, setOrg] = useState('');
   const router = useRouter();
-
   const { signOut } = useAuth();
 
-  const saveApiKey = async () => {
-    setKey(apiKey);
-    setOrganization(org);
-    router.navigate('/(auth)/(drawer)');
-  };
-
-  const removeApiKey = async () => {
-    setKey('');
-    setOrganization('');
-  };
-
   return (
-    <View style={styles.container}>
-      {key && key !== '' && (
-        <>
-          <Text style={styles.label}>You are all set!</Text>
-          <TouchableOpacity
-            style={[defaultStyles.btn, { backgroundColor: Colors.primary }]}
-            onPress={removeApiKey}>
-            <Text style={styles.buttonText}>Remove API Key</Text>
-          </TouchableOpacity>
-        </>
-      )}
+    <ScrollView style={styles.container}>
+      <Text style={styles.label}>COOPER API</Text>
+      <Text style={styles.value}>
+        {USE_PROXY ? PROXY_BASE_URL : DIRECT_HOST}
+      </Text>
 
-      {(!key || key === '') && (
-        <>
-          <Text style={styles.label}>API Key & Organization:</Text>
-          <TextInput
-            style={styles.input}
-            value={apiKey}
-            onChangeText={setApiKey}
-            placeholder="Enter your API key"
-            autoCorrect={false}
-            autoCapitalize="none"
-          />
-          <TextInput
-            style={styles.input}
-            value={org}
-            onChangeText={setOrg}
-            placeholder="Your organization"
-            autoCorrect={false}
-            autoCapitalize="none"
-          />
+      <Text style={[styles.label, { marginTop: 24 }]}>Domains</Text>
+      {DOMAINS.map((d) => (
+        <View key={d.name} style={styles.domainRow}>
+          <View style={[styles.dot, { backgroundColor: d.color }]} />
+          <Text style={styles.domainLabel}>{d.label}</Text>
+          <Text style={styles.domainPort}>:{d.port}</Text>
+        </View>
+      ))}
 
-          <TouchableOpacity
-            style={[defaultStyles.btn, { backgroundColor: Colors.primary }]}
-            onPress={saveApiKey}>
-            <Text style={styles.buttonText}>Save API Key</Text>
-          </TouchableOpacity>
-        </>
-      )}
-      <Button title="Sign Out" onPress={() => signOut()} color={Colors.grey} />
-    </View>
+      <View style={{ marginTop: 32 }}>
+        <Button title="Sign Out" onPress={() => signOut()} color={Colors.grey} />
+      </View>
+    </ScrollView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -79,22 +40,31 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 18,
-    marginBottom: 10,
+    fontWeight: '600',
+    marginBottom: 6,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: Colors.primary,
+  value: {
+    fontSize: 14,
+    color: Colors.grey,
+  },
+  domainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  dot: {
+    width: 10,
+    height: 10,
     borderRadius: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    marginBottom: 20,
-    backgroundColor: '#fff',
+    marginRight: 10,
   },
-
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
+  domainLabel: {
+    fontSize: 15,
+    flex: 1,
+  },
+  domainPort: {
+    fontSize: 13,
+    color: Colors.greyLight,
   },
 });
 export default Page;

@@ -8,6 +8,7 @@ export interface Message {
   content: string;
   imageUrl?: string;
   prompt?: string;
+  loading?: boolean;
 }
 
 export interface Chat {

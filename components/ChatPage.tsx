@@ -1,35 +1,44 @@
 import HeaderDropDown from '@/components/HeaderDropDown';
 import MessageInput from '@/components/MessageInput';
 import { defaultStyles } from '@/constants/Styles';
-import { keyStorage, storage } from '@/utils/Storage';
-import { Redirect, Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, View, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import Colors from '@/constants/Colors';
+import { storage } from '@/utils/Storage';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useMMKVString } from 'react-native-mmkv';
-import OpenAI from 'react-native-openai';
 import { FlashList } from '@shopify/flash-list';
 import ChatMessage from '@/components/ChatMessage';
 import { Message, Role } from '@/utils/Interfaces';
 import MessageIdeas from '@/components/MessageIdeas';
 import { addChat, addMessage, getMessages } from '@/utils/Database';
 import { useSQLiteContext } from 'expo-sqlite/next';
+import { Ionicons } from '@expo/vector-icons';
+import { DOMAINS } from '@/constants/config';
+import { askAuto, askDomain } from '@/services/api';
+
+const DOMAIN_ITEMS = [
+  { key: 'auto', title: 'Auto-route', icon: 'sparkles' },
+  ...DOMAINS.map((d) => ({ key: d.name, title: d.label, icon: 'server' })),
+];
 
 const ChatPage = () => {
-  const [gptVersion, setGptVersion] = useMMKVString('gptVersion', storage);
+  const [selectedDomain, setSelectedDomain] = useMMKVString('cooperDomain', storage);
   const [height, setHeight] = useState(0);
-  const [key, setKey] = useMMKVString('apikey', keyStorage);
-  const [organization, setOrganization] = useMMKVString('org', keyStorage);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
   const db = useSQLiteContext();
-  let { id } = useLocalSearchParams<{ id: string }>();
+  let { id, domain: paramDomain } = useLocalSearchParams<{ id: string; domain?: string }>();
 
-  if (!key || key === '' || !organization || organization === '') {
-    return <Redirect href={'/(auth)/(modal)/settings'} />;
-  }
+  // If navigated from domain explorer, pre-select that domain
+  useEffect(() => {
+    if (paramDomain) {
+      setSelectedDomain(paramDomain);
+    }
+  }, [paramDomain]);
 
   const [chatId, _setChatId] = useState(id);
   const chatIdRef = useRef(chatId);
-  // https://stackoverflow.com/questions/55265255/react-usestate-hook-event-handler-using-initial-state
   function setChatId(id: string) {
     chatIdRef.current = id;
     _setChatId(id);
@@ -43,44 +52,8 @@ const ChatPage = () => {
     }
   }, [id]);
 
-  const openAI = useMemo(
-    () =>
-      new OpenAI({
-        apiKey: key,
-        organization,
-      }),
-    []
-  );
-
-  useEffect(() => {
-    const handleNewMessage = (payload: any) => {
-      setMessages((messages) => {
-        const newMessage = payload.choices[0]?.delta.content;
-        if (newMessage) {
-          messages[messages.length - 1].content += newMessage;
-          return [...messages];
-        }
-        if (payload.choices[0]?.finishReason) {
-          // save the last message
-
-          addMessage(db, parseInt(chatIdRef.current), {
-            content: messages[messages.length - 1].content,
-            role: Role.Bot,
-          });
-        }
-        return messages;
-      });
-    };
-
-    openAI.chat.addListener('onChatMessageReceived', handleNewMessage);
-
-    return () => {
-      openAI.chat.removeListener('onChatMessageReceived');
-    };
-  }, [openAI]);
-
-  const onGptVersionChange = (version: string) => {
-    setGptVersion(version);
+  const onDomainChange = (domain: string) => {
+    setSelectedDomain(domain);
   };
 
   const onLayout = (event: any) => {
@@ -89,26 +62,73 @@ const ChatPage = () => {
   };
 
   const getCompletion = async (text: string) => {
+    if (loading) return;
+
+    // Create chat in DB on first message
     if (messages.length === 0) {
-      addChat(db, text).then((res) => {
-        const chatID = res.lastInsertRowId;
-        setChatId(chatID.toString());
-        addMessage(db, chatID, { content: text, role: Role.User });
-      });
+      const res = await addChat(db, text);
+      const chatID = res.lastInsertRowId;
+      setChatId(chatID.toString());
+      addMessage(db, chatID, { content: text, role: Role.User });
+    } else if (chatIdRef.current) {
+      addMessage(db, parseInt(chatIdRef.current), { content: text, role: Role.User });
     }
 
-    setMessages([...messages, { role: Role.User, content: text }, { role: Role.Bot, content: '' }]);
-    messages.push();
-    openAI.chat.stream({
-      messages: [
-        {
-          role: 'user',
-          content: text,
-        },
-      ],
-      model: gptVersion == '4' ? 'gpt-4' : 'gpt-3.5-turbo',
-    });
+    setMessages((prev) => [
+      ...prev,
+      { role: Role.User, content: text },
+      { role: Role.Bot, content: '…', loading: true },
+    ]);
+    setLoading(true);
+
+    try {
+      const domain = selectedDomain || 'auto';
+      let responseText: string;
+      let responseDomain: string;
+
+      if (domain === 'auto') {
+        const result = await askAuto(text);
+        responseText = result.response;
+        responseDomain = Array.isArray(result.domains) ? result.domains.join(', ') : '';
+      } else {
+        const result = await askDomain(domain, text);
+        responseText = result.response;
+        responseDomain = result.domain;
+      }
+
+      const botContent = responseDomain
+        ? `**[${responseDomain}]**\n\n${responseText}`
+        : responseText;
+
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { role: Role.Bot, content: botContent };
+        return updated;
+      });
+
+      // Save bot response to DB
+      if (chatIdRef.current) {
+        addMessage(db, parseInt(chatIdRef.current), {
+          content: botContent,
+          role: Role.Bot,
+        });
+      }
+    } catch (err: any) {
+      const errorMsg = `Error: ${err.message || 'Failed to get response'}`;
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { role: Role.Bot, content: errorMsg };
+        return updated;
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const currentDomain = selectedDomain || 'auto';
+  const domainLabel = currentDomain === 'auto'
+    ? 'Auto'
+    : DOMAINS.find((d) => d.name === currentDomain)?.label || currentDomain;
 
   return (
     <View style={defaultStyles.pageContainer}>
@@ -116,21 +136,18 @@ const ChatPage = () => {
         options={{
           headerTitle: () => (
             <HeaderDropDown
-              title="ChatGPT"
-              items={[
-                { key: '3.5', title: 'GPT-3.5', icon: 'bolt' },
-                { key: '4', title: 'GPT-4', icon: 'sparkles' },
-              ]}
-              onSelect={onGptVersionChange}
-              selected={gptVersion}
+              title="COOPER"
+              items={DOMAIN_ITEMS}
+              onSelect={onDomainChange}
+              selected={domainLabel}
             />
           ),
         }}
       />
       <View style={styles.page} onLayout={onLayout}>
-        {messages.length == 0 && (
+        {messages.length === 0 && (
           <View style={[styles.logoContainer, { marginTop: height / 2 - 100 }]}>
-            <Image source={require('@/assets/images/logo-white.png')} style={styles.image} />
+            <Ionicons name="chatbubbles" size={30} color="#fff" />
           </View>
         )}
         <FlashList
@@ -165,13 +182,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 50,
     height: 50,
-    backgroundColor: '#000',
-    borderRadius: 50,
-  },
-  image: {
-    width: 30,
-    height: 30,
-    resizeMode: 'cover',
+    backgroundColor: Colors.primary,
+    borderRadius: 25,
   },
   page: {
     flex: 1,

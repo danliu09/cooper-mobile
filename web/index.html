@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>SMECO COOPER</title>
+  <style>
+    :root {
+      --primary: #20AB6E;
+      --bg: #FFFCFF;
+      --input-bg: #f4f4f4;
+      --grey: #242026;
+      --grey-light: #b4b4b4;
+      --border: #e0e0e0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--grey);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-size: 17px;
+      font-weight: 600;
+      flex: 1;
+    }
+    .domain-select {
+      font-size: 14px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--input-bg);
+      color: var(--grey);
+      max-width: 140px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--grey-light);
+      flex-shrink: 0;
+    }
+    .status-dot.online { background: #2ecc71; }
+    .status-dot.offline { background: #e74c3c; }
+    .status-dot.checking { background: #f39c12; animation: pulse 1s infinite; }
+    @keyframes pulse { 50% { opacity: 0.4; } }
+
+    /* Messages area */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 16px;
+      color: var(--grey-light);
+    }
+    .empty-state .icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 28px;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: #fff;
+    }
+
+    /* Idea cards */
+    .ideas {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 0 0 12px 0;
+      -webkit-overflow-scrolling: touch;
+    }
+    .idea-card {
+      flex-shrink: 0;
+      background: var(--input-bg);
+      border-radius: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      max-width: 200px;
+      border: none;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+    .idea-card:active { background: var(--border); }
+    .idea-card .title { font-weight: 600; }
+    .idea-card .sub { color: var(--grey-light); margin-top: 2px; }
+
+    /* Message bubbles */
+    .message {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      align-items: flex-start;
+    }
+    .message .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 14px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #fff;
+    }
+    .message .avatar.bot { background: var(--primary); }
+    .message .avatar.user { background: var(--grey); }
+    .message .bubble {
+      font-size: 15px;
+      line-height: 1.5;
+      flex: 1;
+      min-width: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .message .bubble .domain-tag {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    .message .bubble .elapsed {
+      font-size: 11px;
+      color: var(--grey-light);
+      margin-top: 4px;
+    }
+    .message .bubble.loading {
+      color: var(--grey-light);
+      font-style: italic;
+    }
+    .message .bubble.error {
+      color: #e74c3c;
+    }
+
+    /* Input area */
+    .input-area {
+      padding: 10px 16px;
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+      background: #fff;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+    .input-area textarea {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 10px 14px;
+      font-size: 15px;
+      font-family: inherit;
+      resize: none;
+      max-height: 120px;
+      background: var(--input-bg);
+      outline: none;
+      line-height: 1.4;
+    }
+    .input-area textarea:focus {
+      border-color: var(--primary);
+    }
+    .send-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 18px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .send-btn:disabled {
+      background: var(--grey-light);
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>COOPER</h1>
+    <div class="status-dot checking" id="statusDot" title="Checking..."></div>
+    <select class="domain-select" id="domainSelect">
+      <option value="auto">Auto-route</option>
+    </select>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">&#x1F4AC;</div>
+      <div>Ask COOPER a question</div>
+      <div class="ideas" id="ideas"></div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <textarea id="input" rows="1" placeholder="Message COOPER..." autocomplete="off"></textarea>
+    <button class="send-btn" id="sendBtn" disabled>&#x2191;</button>
+  </div>
+
+  <script>
+    // ---- Config (mirrors constants/config.ts) ----
+    const USE_PROXY = true;
+    const PROXY_BASE_URL = 'https://analytics.smeco.com/ai/api';
+    const DIRECT_HOST = 'http://analyticsdev2.smeco.com';
+
+    const DOMAINS = [
+      { name: 'human_resource', port: 4002, label: 'HR', color: '#3498db' },
+      { name: 'weather', port: 4003, label: 'Weather', color: '#2ecc71' },
+      { name: 'scada', port: 4004, label: 'SCADA', color: '#9b59b6' },
+      { name: 'oms', port: 4005, label: 'OMS & Reliability', color: '#e67e22' },
+      { name: 'ccb', port: 4006, label: 'CC&B', color: '#1abc9c' },
+      { name: 'eip', port: 4007, label: 'EIP', color: '#f39c12' },
+      { name: 'ami', port: 4008, label: 'AMI', color: '#8e44ad' },
+      { name: 'ellipse', port: 4009, label: 'Ellipse', color: '#2c3e50' },
+      { name: 'wms', port: 4010, label: 'WMS', color: '#16a085' },
+    ];
+
+    const DOMAIN_SHORT_NAMES = { human_resource: 'hr' };
+
+    function getApiUrl(domain) {
+      const cfg = DOMAINS.find(d => d.name === domain);
+      if (!cfg) throw new Error('Unknown domain: ' + domain);
+      if (USE_PROXY) {
+        const short = DOMAIN_SHORT_NAMES[cfg.name] || cfg.name;
+        return PROXY_BASE_URL + '/' + short;
+      }
+      return DIRECT_HOST + ':' + cfg.port;
+    }
+
+    function getRouterUrl() {
+      return USE_PROXY ? PROXY_BASE_URL + '/router' : DIRECT_HOST + ':4000';
+    }
+
+    // ---- API ----
+    async function askAuto(question) {
+      const res = await fetch(getRouterUrl() + '/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, chart_type: '', max_rows: 100 }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || 'API error: ' + res.status);
+      }
+      return res.json();
+    }
+
+    async function askDomain(domain, question) {
+      const res = await fetch(getApiUrl(domain) + '/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, chart_type: '', max_rows: '100' }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || 'API error: ' + res.status);
+      }
+      return res.json();
+    }
+
+    async function checkRouterHealth() {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      try {
+        const res = await fetch(getRouterUrl() + '/api/health', { signal: controller.signal });
+        clearTimeout(timeout);
+        return res.ok;
+      } catch {
+        clearTimeout(timeout);
+        return false;
+      }
+    }
+
+    // ---- DOM refs ----
+    const messagesEl = document.getElementById('messages');
+    const emptyState = document.getElementById('emptyState');
+    const ideasEl = document.getElementById('ideas');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('sendBtn');
+    const domainSelect = document.getElementById('domainSelect');
+    const statusDot = document.getElementById('statusDot');
+
+    let messages = [];
+    let sending = false;
+
+    // ---- Init ----
+    // Populate domain dropdown
+    DOMAINS.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.name;
+      opt.textContent = d.label;
+      domainSelect.appendChild(opt);
+    });
+
+    // Restore last domain selection
+    const savedDomain = localStorage.getItem('cooperDomain') || 'auto';
+    domainSelect.value = savedDomain;
+    domainSelect.addEventListener('change', () => {
+      localStorage.setItem('cooperDomain', domainSelect.value);
+    });
+
+    // Health check
+    checkRouterHealth().then(ok => {
+      statusDot.className = 'status-dot ' + (ok ? 'online' : 'offline');
+      statusDot.title = ok ? 'Connected' : 'Offline';
+    });
+
+    // Idea cards
+    const IDEAS = [
+      { title: 'Show outage summary', sub: 'for the past 7 days' },
+      { title: 'What is the current', sub: 'SAIDI and SAIFI this year?' },
+      { title: 'List top 10 feeders', sub: 'by customer minutes interrupted' },
+    ];
+    IDEAS.forEach(idea => {
+      const btn = document.createElement('button');
+      btn.className = 'idea-card';
+      btn.innerHTML = '<div class="title">' + idea.title + '</div><div class="sub">' + idea.sub + '</div>';
+      btn.onclick = () => send(idea.title + ' ' + idea.sub);
+      ideasEl.appendChild(btn);
+    });
+
+    // ---- Input handling ----
+    input.addEventListener('input', () => {
+      sendBtn.disabled = input.value.trim().length === 0 || sending;
+      // Auto-resize
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (input.value.trim() && !sending) send(input.value.trim());
+      }
+    });
+
+    sendBtn.addEventListener('click', () => {
+      if (input.value.trim() && !sending) send(input.value.trim());
+    });
+
+    // ---- Render ----
+    function renderMessages() {
+      if (messages.length === 0) {
+        emptyState.style.display = 'flex';
+        return;
+      }
+      emptyState.style.display = 'none';
+
+      // Build HTML
+      let html = '';
+      messages.forEach(m => {
+        const isBot = m.role === 'bot';
+        const avatarClass = isBot ? 'bot' : 'user';
+        const avatarText = isBot ? '&#x2728;' : '&#x1F464;';
+        let bubbleClass = 'bubble';
+        if (m.loading) bubbleClass += ' loading';
+        if (m.error) bubbleClass += ' error';
+
+        let content = escapeHtml(m.content);
+        // Render **[domain]** as domain tag
+        content = content.replace(/\*\*\[([^\]]+)\]\*\*/g, '<div class="domain-tag">$1</div>');
+
+        let extra = '';
+        if (m.elapsed_ms) {
+          extra = '<div class="elapsed">' + (m.elapsed_ms / 1000).toFixed(1) + 's</div>';
+        }
+
+        html += '<div class="message">' +
+          '<div class="avatar ' + avatarClass + '">' + avatarText + '</div>' +
+          '<div class="' + bubbleClass + '">' + content + extra + '</div>' +
+          '</div>';
+      });
+      messagesEl.innerHTML = html;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- Send ----
+    async function send(text) {
+      sending = true;
+      sendBtn.disabled = true;
+      input.value = '';
+      input.style.height = 'auto';
+
+      messages.push({ role: 'user', content: text });
+      messages.push({ role: 'bot', content: 'Thinking...', loading: true });
+      renderMessages();
+
+      const domain = domainSelect.value;
+
+      try {
+        let result;
+        if (domain === 'auto') {
+          result = await askAuto(text);
+          const domainLabel = Array.isArray(result.domains) ? result.domains.join(', ') : '';
+          messages[messages.length - 1] = {
+            role: 'bot',
+            content: domainLabel
+              ? '**[' + domainLabel + ']**\n\n' + result.response
+              : result.response,
+            elapsed_ms: result.elapsed_ms,
+          };
+        } else {
+          result = await askDomain(domain, text);
+          messages[messages.length - 1] = {
+            role: 'bot',
+            content: '**[' + result.domain + ']**\n\n' + result.response,
+            elapsed_ms: result.elapsed_ms,
+          };
+        }
+      } catch (err) {
+        messages[messages.length - 1] = {
+          role: 'bot',
+          content: 'Error: ' + (err.message || 'Failed to get response'),
+          error: true,
+        };
+      }
+
+      sending = false;
+      sendBtn.disabled = false;
+      renderMessages();
+      input.focus();
+    }
+  </script>
+</body>
+</html>

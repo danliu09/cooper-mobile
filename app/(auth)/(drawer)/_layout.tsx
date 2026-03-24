@@ -22,7 +22,6 @@ import { useSQLiteContext } from 'expo-sqlite/next';
 import { useDrawerStatus } from '@react-navigation/drawer';
 import { Chat } from '@/utils/Interfaces';
 import * as ContextMenu from 'zeego/context-menu';
-import { useRevenueCat } from '@/providers/RevenueCat';
 import { Keyboard } from 'react-native';
 
 export const CustomDrawerContent = (props: any) => {
@@ -152,7 +151,6 @@ export const CustomDrawerContent = (props: any) => {
 const Layout = () => {
   const navigation = useNavigation();
   const dimensions = useWindowDimensions();
-  const { user } = useRevenueCat();
   const router = useRouter();
 
   return (
@@ -182,10 +180,10 @@ const Layout = () => {
         name="(chat)/new"
         getId={() => Math.random().toString()}
         options={{
-          title: 'ChatGPT',
+          title: 'COOPER',
           drawerIcon: () => (
-            <View style={[styles.item, { backgroundColor: '#000' }]}>
-              <Image source={require('@/assets/images/logo-white.png')} style={styles.btnImage} />
+            <View style={[styles.item, { backgroundColor: Colors.primary, width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }]}>
+              <Ionicons name="chatbubbles" size={16} color="#fff" />
             </View>
           ),
           headerRight: () => (
@@ -225,28 +223,28 @@ const Layout = () => {
       <Drawer.Screen
         name="dalle"
         options={{
-          title: 'Dall·E',
+          title: 'Domains',
           drawerIcon: () => (
-            <View style={[styles.item, { backgroundColor: '#000' }]}>
-              <Image source={require('@/assets/images/dalle.png')} style={styles.dallEImage} />
+            <View
+              style={[
+                styles.item,
+                {
+                  backgroundColor: '#fff',
+                  width: 28,
+                  height: 28,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                },
+              ]}>
+              <Ionicons name="grid-outline" size={18} color="#000" />
             </View>
           ),
-        }}
-        listeners={{
-          drawerItemPress: (e) => {
-            e.preventDefault();
-            if (!user.dalle) {
-              router.navigate('/(auth)/(modal)/purchase');
-            } else {
-              router.navigate('/(auth)/dalle');
-            }
-          },
         }}
       />
       <Drawer.Screen
         name="explore"
         options={{
-          title: 'Explore GPTs',
+          title: 'Explore Domains',
           drawerIcon: () => (
             <View
               style={[
@@ -317,11 +315,6 @@ const styles = StyleSheet.create({
     margin: 6,
     width: 16,
     height: 16,
-  },
-  dallEImage: {
-    width: 28,
-    height: 28,
-    resizeMode: 'cover',
   },
 });
 

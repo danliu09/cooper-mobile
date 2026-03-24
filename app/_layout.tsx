@@ -77,9 +77,6 @@ const InitialLayout = () => {
         options={{
           presentation: 'modal',
           title: '',
-          headerTitleStyle: {
-            fontFamily: 'mon-sb',
-          },
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()}>
               <Ionicons name="close-outline" size={28} />
